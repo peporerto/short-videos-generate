@@ -1,0 +1,9 @@
+default_topic: "El futuro de la inteligencia artificial"
+image_prompts:
+  hook: "Dramatic close-up of a human eye reflecting glowing data streams,
+    cinematic lighting, 4k"
+  context: "Split screen of analog vs digital world, high contrast, editorial
+    photography style"
+  value: "Glowing neural network floating in dark space, abstract, photorealistic, 4k"
+  outro: "Person standing at a crossroads with light ahead, cinematic, hopeful
+    atmosphere"
