@@ -8,7 +8,7 @@ def generate_image(prompt: str, output_path: str) -> None:
     if not api_key:
         raise ValueError("HUGGINGFACE_API_KEY no configurada.")
         
-    url = "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0"
+    url = "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-2-1"
     headers = {"Authorization": f"Bearer {api_key}"}
     payload = {"inputs": prompt}
     
@@ -22,7 +22,7 @@ def generate_image(prompt: str, output_path: str) -> None:
             
             with open(output_path, "wb") as f:
                 f.write(response.content)
-            return  # Éxito
+            return
             
         except requests.exceptions.RequestException as e:
             if attempt == max_retries - 1:

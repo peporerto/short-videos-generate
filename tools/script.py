@@ -11,26 +11,29 @@ def generate_script(topic: str) -> Dict[str, str]:
             raise ValueError("GEMINI_API_KEY no configurada.")
             
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        
+        # Configuramos el modelo para que ESCUPA JSON puro
+        model = genai.GenerativeModel(
+            model_name="gemini-3-flash-preview",
+            generation_config={"response_mime_type": "application/json"}
+        )
         
         prompt = f"""
         Genera un guion para un video corto de 60 segundos sobre: {topic}.
-        Debes responder estrictamente con un JSON válido con estas claves exactas y sin texto adicional:
+        Responde estrictamente con este esquema JSON:
         {{
-            "hook": "0-3s: pregunta o afirmación que genera tensión",
-            "context": "3-10s: por qué importa",
-            "value": "10-45s: la respuesta o el contenido real",
-            "outro": "45-60s: cierre o llamada a acción"
+            "hook": "0-3s: frase de impacto",
+            "context": "3-10s: contexto",
+            "value": "10-45s: contenido",
+            "outro": "45-60s: cierre"
         }}
         """
-        response = model.generate_content(prompt)
-        text = response.text.strip()
-        if text.startswith("```json"):
-            text = text[7:-3].strip()
-        elif text.startswith("```"):
-            text = text[3:-3].strip()
         
-        script_data = json.loads(text)
-        return script_data
+        # Una sola llamada es suficiente
+        response = model.generate_content(prompt)
+        
+        # Como usamos response_mime_type, response.text ya es un JSON válido
+        return json.loads(response.text)
+
     except Exception as e:
         raise RuntimeError(f"Error generando guion con Gemini: {e}")
