@@ -1,31 +1,40 @@
-import math
+import whisper
 
-def generate_srt(text: str, audio_duration_seconds: float, output_path: str) -> None:
-    """Genera un archivo SRT calculando tiempos desde el texto y la duración total."""
+def generate_srt(audio_path: str, output_path: str) -> None:
+    """Genera un archivo SRT con timestamps reales usando Whisper."""
     try:
-        words = text.split()
-        if not words:
-            raise ValueError("El texto está vacío.")
-        
-        words_per_second = len(words) / audio_duration_seconds
-        
+        model = whisper.load_model("small")
+        result = model.transcribe(audio_path, language="es", word_timestamps=True)
+
         with open(output_path, "w", encoding="utf-8") as f:
-            chunk_size = 4  # palabras por subtítulo
-            for i in range(0, len(words), chunk_size):
-                chunk = words[i:i + chunk_size]
-                start_time_sec = i / words_per_second
-                end_time_sec = (i + len(chunk)) / words_per_second
-                
-                # Formato SRT: HH:MM:SS,mmm
-                start_str = _format_time(start_time_sec)
-                end_str = _format_time(end_time_sec)
-                
-                index = (i // chunk_size) + 1
-                f.write(f"{index}\n")
-                f.write(f"{start_str} --> {end_str}\n")
-                f.write(f"{' '.join(chunk)}\n\n")
+            index = 1
+            for segment in result["segments"]:
+                words = segment.get("words", [])
+                chunk = []
+                chunk_start = None
+
+                for word in words:
+                    if chunk_start is None:
+                        chunk_start = word["start"]
+                    chunk.append(word["word"].strip())
+
+                    if len(chunk) >= 4:
+                        start_str = _format_time(chunk_start)
+                        end_str = _format_time(word["end"])
+                        f.write(f"{index}\n{start_str} --> {end_str}\n{' '.join(chunk)}\n\n")
+                        index += 1
+                        chunk = []
+                        chunk_start = None
+
+                if chunk:
+                    end_time = words[-1]["end"] if words else segment["end"]
+                    start_str = _format_time(chunk_start)
+                    end_str = _format_time(end_time)
+                    f.write(f"{index}\n{start_str} --> {end_str}\n{' '.join(chunk)}\n\n")
+                    index += 1
+
     except Exception as e:
-        raise RuntimeError(f"Error generando archivo SRT: {e}")
+        raise RuntimeError(f"Error generando SRT con Whisper: {e}")
 
 def _format_time(seconds: float) -> str:
     """Formatea segundos a formato de tiempo SRT."""

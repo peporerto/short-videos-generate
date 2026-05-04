@@ -1,9 +1,56 @@
-default_topic: "El futuro de la inteligencia artificial"
-image_prompts:
-  hook: "Dramatic close-up of a human eye reflecting glowing data streams,
-    cinematic lighting, 4k"
-  context: "Split screen of analog vs digital world, high contrast, editorial
-    photography style"
-  value: "Glowing neural network floating in dark space, abstract, photorealistic, 4k"
-  outro: "Person standing at a crossroads with light ahead, cinematic, hopeful
-    atmosphere"
+nichos:
+  finanzas:
+    image_style: "cinematic photorealistic, high contrast, 4k, editorial photography
+      style, professional"
+    camera_effect: "zoom_in"
+    music: "assets/music/corporate.mp3"
+    voice: "es-CO-GonzaloNeural"
+    duration_target: 60
+
+  ai_tech:
+    image_style: "futuristic digital art, glowing neon lights, cyberpunk aesthetic,
+      8k render, ultra detailed"
+    camera_effect: "pan_right"
+    music: "assets/music/tech.mp3"
+    voice: "es-CO-GonzaloNeural"
+    duration_target: 60
+
+  terror:
+    image_style: "dark horror illustration, gothic atmosphere, dramatic shadows,
+      hyper-realistic, unsettling"
+    camera_effect: "zoom_in_out"
+    music: "assets/music/dark.mp3"
+    voice: "es-ES-AlvaroNeural"
+    duration_target: 55
+
+  geopolitica:
+    image_style: "documentary photography style, dramatic lighting, photojournalism,
+      4k, raw emotion"
+    camera_effect: "pan_left"
+    music: "assets/music/dramatic.mp3"
+    voice: "es-CO-GonzaloNeural"
+    duration_target: 60
+
+  caricatura:
+    image_style: "cartoon illustration style, vibrant colors, Pixar-like 3D render,
+      clean lines, fun"
+    camera_effect: "zoom_in"
+    music: "assets/music/upbeat.mp3"
+    voice: "es-CO-GonzaloNeural"
+    duration_target: 58
+
+  esqueletos:
+    image_style: "hyper-realistic skeleton in everyday situations, cinematic
+      lighting, dark humor, detailed bones"
+    camera_effect: "zoom_in_out"
+    music: "assets/music/dramatic.mp3"
+    voice: "es-CO-GonzaloNeural"
+    duration_target: 60
+
+  motivacional:
+    image_style: "epic landscape photography, golden hour lighting, cinematic wide
+      shot, inspiring atmosphere"
+    camera_effect: "pan_up"
+    music: "assets/music/upbeat.mp3"
+    voice: "es-CO-GonzaloNeural"
+    duration_target: 60

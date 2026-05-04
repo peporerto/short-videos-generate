@@ -3,16 +3,23 @@ import sys
 import asyncio
 import yaml
 import ffmpeg
+import argparse
+import time
 from dotenv import load_dotenv
 
-# Garantiza que la raíz del proyecto esté en el path independientemente
-# de desde dónde se ejecute el script
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from tools.script import generate_script
 from tools.tts import generate_audio
 from tools.srt import generate_srt
+from tools.images import generate_image
 from tools.video import assemble_video
+
+def log(msg: str, start: float = None) -> float:
+    """Imprime un mensaje con tiempo transcurrido opcional."""
+    elapsed = f" ({time.time() - start:.1f}s)" if start else ""
+    print(f"[{time.strftime('%H:%M:%S')}] {msg}{elapsed}")
+    return time.time()
 
 def get_audio_duration(audio_path: str) -> float:
     """Obtiene la duración del archivo de audio usando ffprobe."""
@@ -26,6 +33,11 @@ async def main() -> None:
     """Flujo principal para orquestar la generación de videos cortos."""
     load_dotenv()
 
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--niche", type=str, default=None)
+    parser.add_argument("--prompt", type=str, default=None)
+    args = parser.parse_args()
+
     config_path = "config.yaml"
     if not os.path.exists(config_path):
         raise RuntimeError(f"Falta el archivo de configuración: {config_path}")
@@ -33,43 +45,76 @@ async def main() -> None:
     with open(config_path, "r", encoding="utf-8") as f:
         config = yaml.safe_load(f) or {}
 
-    topic = "Inteligencia artificial"
-    if os.path.exists("input/prompt.txt"):
+    # Resolver nicho
+    niche = args.niche or "ai_tech"
+    niche_config = config.get("nichos", {}).get(niche)
+    if not niche_config:
+        raise RuntimeError(f"Nicho '{niche}' no encontrado en config.yaml. Nichos disponibles: {list(config.get('nichos', {}).keys())}")
+
+    image_style = niche_config.get("image_style", "cinematic photorealistic, 4k")
+    music_path = niche_config.get("music")
+    voice = niche_config.get("voice", "es-CO-GonzaloNeural")
+
+    # Resolver prompt/topic
+    if args.prompt and args.prompt.strip():
+        topic = args.prompt.strip()
+    elif os.path.exists("input/prompt.txt"):
         with open("input/prompt.txt", "r", encoding="utf-8") as f:
             topic = f.read().strip()
     else:
-        topic = config.get("default_topic", topic)
+        topic = config.get("default_topic", "Inteligencia artificial")
 
-    print(f"Generando guion para: {topic}")
-    script_data = generate_script(topic)
-    full_text = f"{script_data.get('hook', '')} {script_data.get('context', '')} {script_data.get('value', '')} {script_data.get('outro', '')}"
+    total_start = time.time()
+    log(f"Nicho: {niche} | Tema: {topic}")
 
-    print("Generando audio TTS...")
+    t = log("Generando guion...")
+    script_data = generate_script(topic, image_style)
+    full_text = " ".join([
+        script_data.get(key, {}).get("text", "")
+        for key in ["hook", "context", "value", "outro"]
+    ])
+    log("Guion generado", t)
+
+    t = log("Generando audio TTS...")
     audio_path = "output/audio.mp3"
-    await generate_audio(full_text, audio_path)
-
+    await generate_audio(full_text, audio_path, voice=voice)
     duration = get_audio_duration(audio_path)
-    print(f"Duración del audio: {duration:.2f}s")
+    log(f"Audio generado — {duration:.1f}s", t)
 
-    print("Generando SRT...")
+    t = log("Generando subtítulos...")
     srt_path = "output/subtitles.srt"
-    generate_srt(full_text, duration, srt_path)
+    generate_srt(audio_path, srt_path)
+    log("Subtítulos generados", t)
 
-    print("Buscando imágenes en input/...")
+    log("Verificando imágenes...")
     image_paths = sorted([
         f"input/{f}" for f in os.listdir("input")
         if f.lower().endswith((".jpg", ".jpeg", ".png"))
     ])
 
-    if not image_paths:
-        raise RuntimeError("No hay imágenes en input/. Agrega imágenes para el Modo A.")
+    if image_paths:
+        log(f"Modo A: usando {len(image_paths)} imágenes de input/")
+    else:
+        log("Modo B: generando imágenes con IA...")
+        keys = ["hook", "context", "value", "outro"]
+        for i, key in enumerate(keys):
+            img_prompt = script_data.get(key, {}).get(
+                "image_prompt",
+                f"A visual representation of {topic}, {image_style}"
+            )
+            img_path = f"output/image_{i}.png"
+            t = log(f"  Imagen {i+1}/4...")
+            generate_image(img_prompt, img_path)
+            log(f"  Imagen {i+1}/4 lista", t)
+            image_paths.append(img_path)
 
-    print(f"Encontradas {len(image_paths)} imágenes.")
-
-    print("Ensamblando video...")
+    t = log("Ensamblando video...")
     output_video = "output/final_short.mp4"
-    assemble_video(image_paths, audio_path, srt_path, output_video, duration)
-    print("¡Video generado con éxito en output/final_short.mp4!")
+    camera_effect = niche_config.get("camera_effect", "zoom_in")
+    assemble_video(image_paths, audio_path, srt_path, output_video, duration, music_path=music_path, camera_effect=camera_effect)
+    log("Video ensamblado", t)
+
+    log(f"¡Video generado en output/final_short.mp4! — Total", total_start)
 
 if __name__ == "__main__":
     os.makedirs("input", exist_ok=True)
