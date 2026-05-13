@@ -16,6 +16,8 @@ pyyaml = "^6.0.1"
 aiofiles = "^23.2.1"
 requests = "^2.31.0"
 edge-tts = {git = "https://github.com/rany2/edge-tts.git"}
+pillow = "^12.2.0"
+opencv-python-headless = "^4.13.0.92"
 
 [build-system]
 requires = ["poetry-core"]

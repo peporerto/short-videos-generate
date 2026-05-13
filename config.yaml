@@ -1,56 +1,63 @@
 nichos:
   finanzas:
-    image_style: "cinematic photorealistic, high contrast, 4k, editorial photography
-      style, professional"
+    image_style: "cinematic 2D illustration, editorial style, dimly lit office or urban environment, muted warm tones, soft shadows, atmospheric, minimalist composition, no text, no watermark"
     camera_effect: "zoom_in"
     music: "assets/music/corporate.mp3"
     voice: "es-CO-GonzaloNeural"
-    duration_target: 60
+    duration: "short"
+    format: "short"
+    narrative_mode: "informative"
 
   ai_tech:
-    image_style: "futuristic digital art, glowing neon lights, cyberpunk aesthetic,
-      8k render, ultra detailed"
+    image_style: "cinematic 2D illustration, editorial style, dark room with single screen light, cold blue tones, atmospheric depth, soft shadows, minimalist, storytelling composition, no text, no watermark"
     camera_effect: "pan_right"
     music: "assets/music/tech.mp3"
     voice: "es-CO-GonzaloNeural"
-    duration_target: 60
+    duration: "short"
+    format: "short"
+    narrative_mode: "informative"
 
   terror:
-    image_style: "dark horror illustration, gothic atmosphere, dramatic shadows,
-      hyper-realistic, unsettling"
+    image_style: "cinematic 2D illustration, dark horror editorial style, empty spaces with unsettling atmosphere, deep shadows, almost black palette with single cold light source, fog, silence implied, no text, no watermark"
     camera_effect: "zoom_in_out"
     music: "assets/music/dark.mp3"
     voice: "es-ES-AlvaroNeural"
-    duration_target: 55
+    duration: "medium"
+    format: "short"
+    narrative_mode: "second_person"
 
   geopolitica:
-    image_style: "documentary photography style, dramatic lighting, photojournalism,
-      4k, raw emotion"
+    image_style: "cinematic 2D illustration, editorial storytelling style, atmospheric war-torn or cold environments, muted desaturated palette, moody low-key lighting, wide empty shots, emotional depth, no characters facing camera, no text, no watermark"
     camera_effect: "pan_left"
     music: "assets/music/dramatic.mp3"
-    voice: "es-CO-GonzaloNeural"
-    duration_target: 60
+    voice: "es-EC-LuisNeural"
+    duration: "medium"
+    format: "long"
+    narrative_mode: "second_person"
 
   caricatura:
-    image_style: "cartoon illustration style, vibrant colors, Pixar-like 3D render,
-      clean lines, fun"
+    image_style: "cinematic 2D illustration, serious animated film style, soft warm tones, clean lines, emotional storytelling scenes, atmospheric lighting, no childish elements, no text, no watermark"
     camera_effect: "zoom_in"
     music: "assets/music/upbeat.mp3"
     voice: "es-CO-GonzaloNeural"
-    duration_target: 58
+    duration: "short"
+    format: "short"
+    narrative_mode: "informative"
 
   esqueletos:
-    image_style: "hyper-realistic skeleton in everyday situations, cinematic
-      lighting, dark humor, detailed bones"
+    image_style: "cinematic 2D illustration, dark editorial style, skeleton figures in mundane everyday environments, dramatic contrast between ordinary setting and eerie subject, muted colors, moody lighting, no text, no watermark"
     camera_effect: "zoom_in_out"
     music: "assets/music/dramatic.mp3"
     voice: "es-CO-GonzaloNeural"
-    duration_target: 60
+    duration: "medium"
+    format: "short"
+    narrative_mode: "second_person"
 
   motivacional:
-    image_style: "epic landscape photography, golden hour lighting, cinematic wide
-      shot, inspiring atmosphere"
+    image_style: "cinematic 2D illustration, epic wide landscape editorial style, golden hour warm tones, vast empty spaces implying scale and solitude, atmospheric depth, soft light on horizon, no text, no watermark"
     camera_effect: "pan_up"
     music: "assets/music/upbeat.mp3"
     voice: "es-CO-GonzaloNeural"
-    duration_target: 60
+    duration: "medium"
+    format: "short"
+    narrative_mode: "second_person"
