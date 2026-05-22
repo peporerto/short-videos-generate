@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "ai-shorts-generator"
+version = "0.1.0"
+description = "Automated AI-powered short video generator"
+authors = ["Santiago"]
+readme = "README.md"
+packages = [{ include = "tools" }, { include = "flows" }]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+ffmpeg-python = "^0.2.0"
+huggingface-hub = "^0.23.0"
+google-generativeai = "^0.7.0"
+python-dotenv = "^1.0.0"
+pyyaml = "^6.0.1"
+aiofiles = "^23.2.1"
+requests = "^2.31.0"
+edge-tts = {git = "https://github.com/rany2/edge-tts.git"}
+pillow = "^12.2.0"
+opencv-python-headless = "^4.13.0.92"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
