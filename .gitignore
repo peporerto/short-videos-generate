@@ -1,13 +1,8 @@
 __pycache__/
 *.pyc
 .env
-<<<<<<< HEAD
 #input/
 #output/
-=======
-input/
-output/
->>>>>>> ca52ab4e061fdd2c4390c50a8e8a2e85a3993e58
 assets/music/
 .venv/
 env/
