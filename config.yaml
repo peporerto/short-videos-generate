@@ -61,3 +61,65 @@ nichos:
     duration: "medium"
     format: "short"
     narrative_mode: "second_person"
+
+  mascota_tutorial:
+    voice: "es-CO-GonzaloNeural"
+    duration: "short"
+    format: "short"
+    narrative_mode: "informative"
+    music: "assets/music/corporate.mp3"
+    mascota_dir: "assets/mascota"
+    rhubarb_bin: "bin/rhubarb"
+    mouth_shape_map:
+      A: "mouth_placeholder_A.png"
+      B: "mouth_placeholder_B.png"
+      C: "mouth_placeholder_C.png"
+      D: "mouth_placeholder_D.png"
+      E: "mouth_placeholder_E.png"
+
+  differences:
+    format: "short"
+    voice: "en-US-GuyNeural"
+    music: null
+    # Canvas / output
+    canvas_width: 720
+    canvas_height: 1280
+    background: "assets/differences/background.gif"
+    watermark_text: "@Mrworm-b6k"
+    watermark_font_size: 54
+    watermark_color: "DEAF0F"
+    # Image containers (both A and B — identical size)
+    container_width: 300
+    container_height: 220
+    container_radius: 18
+    container_y: 160 # top edge Y of the container row
+    container_margin: 20 # gap between the two containers (centered pair)
+    crop_threshold_pct: 35 # abort if crop would remove >35% of area
+    # Mr. Worm poses
+    worm_presenter_left: "assets/worm/presenter_pointing-the-left.png"
+    worm_presenter_right: "assets/worm/presenter_pointing-the-right.png"
+    worm_confused: "assets/worm/confused.png"
+    worm_professor: "assets/worm/professor.png"
+    # worm_x removed — now computed as canvas_width // 2 dynamically
+    worm_y: 640 # top edge of worm in canvas
+    # Beat durations (seconds)
+    beat_hook_sec: 3.0
+    beat_question_sec: 1.0
+    beat_def1_sec: 3.0
+    beat_def2_sec: 3.0
+    # Captions
+    caption_font: "assets/fonts/Cairo-Bold.ttf"
+    caption_font_size: 48
+    caption_color: "#111111"
+    caption_y: 450 # top of caption band
+    caption_max_width: 640
+    question_text: "What's the difference?"
+    # Audio speed & transition overrides
+    voice_rate: "+50%"
+    transition_sec: 0.4
+    pop_audio: "input/audio/dragon-studio-clean-minimal-pop-467466.mp3"
+    # Script input
+    script_path: "input/differences/script.txt"
+    images_dir: "input/differences"
+    # Output
+    fps: 30

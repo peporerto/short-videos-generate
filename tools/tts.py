@@ -5,17 +5,17 @@ import os
 from typing import List
 
 
-async def generate_audio(text: str, output_path: str, voice: str = "es-CO-GonzaloNeural") -> None:
+async def generate_audio(text: str, output_path: str, voice: str = "es-CO-GonzaloNeural", rate: str = "-10%") -> None:
     """Genera audio a partir de texto usando edge-tts en español."""
     try:
-        communicate = edge_tts.Communicate(text, voice, rate="-10%")
+        communicate = edge_tts.Communicate(text, voice, rate=rate)
         await communicate.save(output_path)
     except Exception as e:
         raise RuntimeError(f"Error generando audio con edge-tts: {e}")
 
 
-async def _generate_one(text: str, path: str, voice: str) -> str:
-    communicate = edge_tts.Communicate(text, voice, rate="-10%")
+async def _generate_one(text: str, path: str, voice: str, rate: str = "-10%") -> str:
+    communicate = edge_tts.Communicate(text, voice, rate=rate)
     await communicate.save(path)
     return path
 
@@ -24,6 +24,7 @@ async def generate_audio_segments(
     segments: List[str],
     output_dir: str,
     voice: str = "es-CO-GonzaloNeural",
+    rate: str = "-10%",
 ) -> List[str]:
     """
     Genera un MP3 por cada segmento en paralelo (asyncio.gather).
@@ -32,7 +33,7 @@ async def generate_audio_segments(
     """
     os.makedirs(output_dir, exist_ok=True)
     paths = [os.path.join(output_dir, f"seg_{i:03d}.mp3") for i in range(len(segments))]
-    tasks = [_generate_one(text, path, voice) for text, path in zip(segments, paths)]
+    tasks = [_generate_one(text, path, voice, rate=rate) for text, path in zip(segments, paths)]
     await asyncio.gather(*tasks)
     return paths
 

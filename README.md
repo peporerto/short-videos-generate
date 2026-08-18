@@ -12,6 +12,7 @@ Creates videos from a script + images, with Ken Burns camera effects, dynamic tr
 - **edge-tts** — text-to-speech (Spanish voices)
 - **Pollinations.ai** — free image generation (no account needed)
 - **Whisper** — subtitle generation (optional)
+- **Rhubarb Lip Sync** — phonetic lip-sync animation for mascot mouth shapes
 - **FFmpeg** — video assembly, effects, transitions
 
 ---
@@ -28,12 +29,15 @@ ai-shorts-generator/
 │   ├── srt.py                ← Whisper subtitle generation
 │   ├── images.py             ← Pollinations image generation
 │   ├── video.py              ← FFmpeg assembly + effects
+│   ├── lipsync.py            ← Rhubarb lip-sync animation
 │   ├── sprites.py            ← avatar/background processing
 │   └── compositor.py         ← avatar + background compositing
 ├── assets/
 │   ├── avatares/             ← processed avatar PNGs (transparent)
 │   ├── escenarios/           ← processed background PNGs
+│   ├── mascota/              ← mascot mouth shape PNGs
 │   └── music/                ← background music files
+├── bin/                      ← Rhubarb CLI binary (bin/rhubarb.exe)
 ├── input/
 │   ├── script.txt            ← manual script (optional)
 │   ├── prompts.txt           ← manual image prompts with effects (optional)
@@ -127,6 +131,7 @@ make run NICHE=finanzas PROMPT="por que el 90 por ciento de la gente pierde dine
 | `caricatura` | Short 9:16 | 60s | GonzaloNeural CO | Animated film |
 | `esqueletos` | Short 9:16 | 5min | GonzaloNeural CO | Dark editorial |
 | `motivacional` | Short 9:16 | 5min | GonzaloNeural CO | Epic landscape |
+| `mascota_tutorial` | Short 9:16 | 60s | GonzaloNeural CO | Lip-sync puppet tutorial |
 
 ---
 
@@ -216,6 +221,24 @@ poetry run python tools/compositor.py
 
 ---
 
+## Mascot Lip-Sync System (`mascota_tutorial`)
+
+Automated puppet lip-sync using Rhubarb Lip Sync CLI:
+
+1. Voiceover audio is generated via `edge-tts` (or manual script/audio)
+2. Audio is converted to WAV and analyzed by Rhubarb (`--recognizer phonetic`)
+3. Rhubarb outputs timestamped mouth cues (A–F, X)
+4. `tools/lipsync.py` normalizes mouth PNGs from `assets/mascota/` and creates a synchronized video
+5. `tools/video.py` mixes the lip-sync video with audio and background music
+
+Run mascot tutorial niche:
+
+```bash
+make run NICHE=mascota_tutorial
+```
+
+---
+
 ## Video Output
 
 | Format | Resolution | Use case |
@@ -249,6 +272,9 @@ make run NICHE=geopolitica FORMAT=short
 
 # Force duration override
 make run NICHE=terror PROMPT="la leyenda de la llorona" DURATION=short
+
+# Mascot tutorial mode (lip-sync puppet)
+make run NICHE=mascota_tutorial
 ```
 
 ---

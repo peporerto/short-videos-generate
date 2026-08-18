@@ -71,7 +71,10 @@ def assemble_video(
     from tools.tts import get_segment_duration
 
     num_images = len(image_paths)
-    if num_images == 0:
+    raw_video = os.path.abspath("output/clips/raw_concat.mp4")
+    skip_render = num_images == 0 and os.path.exists(raw_video)
+
+    if num_images == 0 and not skip_render:
         raise ValueError("No hay imagenes.")
 
     fmt    = FORMAT_CONFIG.get(video_format, FORMAT_CONFIG["short"])
@@ -79,79 +82,81 @@ def assemble_video(
     height = fmt["height"]
     fps    = FPS
 
-    total_frames = round(duration_sec * fps)
+    if not skip_render:
+        total_frames = round(duration_sec * fps)
 
-    # ── Calcular frames por clip ──────────────────────────────────
-    if segment_audio_paths and len(segment_audio_paths) == num_images:
-        print(f"  Midiendo duraciones reales de {num_images} segmentos de audio...")
-        seg_durations = []
-        for i, seg_path in enumerate(segment_audio_paths):
-            d = get_segment_duration(seg_path)
-            seg_durations.append(d)
-            print(f"    [{i:02d}] {os.path.basename(seg_path)}: {d:.3f}s")
-        clip_frames = _frames_from_durations(seg_durations, total_frames, fps)
-        print(f"  Suma duraciones segmentos: {sum(seg_durations):.3f}s | Audio total: {duration_sec:.3f}s")
-    else:
-        if segment_audio_paths:
-            print(f"  ADVERTENCIA: segment_audio_paths ({len(segment_audio_paths)}) != imagenes ({num_images}). Distribucion igual.")
+        # ── Calcular frames por clip ──────────────────────────────────
+        if segment_audio_paths and len(segment_audio_paths) == num_images:
+            print(f"  Midiendo duraciones reales de {num_images} segmentos de audio...")
+            seg_durations = []
+            for i, seg_path in enumerate(segment_audio_paths):
+                d = get_segment_duration(seg_path)
+                seg_durations.append(d)
+                print(f"    [{i:02d}] {os.path.basename(seg_path)}: {d:.3f}s")
+            clip_frames = _frames_from_durations(seg_durations, total_frames, fps)
+            print(f"  Suma duraciones segmentos: {sum(seg_durations):.3f}s | Audio total: {duration_sec:.3f}s")
         else:
-            print("  Sin segmentos de audio — distribucion igual.")
-        dur_each = duration_sec / num_images
-        clip_frames = _frames_from_durations([dur_each] * num_images, total_frames, fps)
+            if segment_audio_paths:
+                print(f"  ADVERTENCIA: segment_audio_paths ({len(segment_audio_paths)}) != imagenes ({num_images}). Distribucion igual.")
+            else:
+                print("  Sin segmentos de audio — distribucion igual.")
+            dur_each = duration_sec / num_images
+            clip_frames = _frames_from_durations([dur_each] * num_images, total_frames, fps)
 
-    # ── 1. Pre-render clips ───────────────────────────────────────
-    os.makedirs("output/clips", exist_ok=True)
-    clip_paths = []
-    print(f"\n  Renderizando {num_images} clips...")
+        # ── 1. Pre-render clips ───────────────────────────────────────
+        os.makedirs("output/clips", exist_ok=True)
+        clip_paths = []
+        print(f"\n  Renderizando {num_images} clips...")
 
-    for i, img_path in enumerate(image_paths):
-        effect = (
-            effect_list[i]
-            if (effect_list and i < len(effect_list))
-            else _pick_effect(i, camera_effect)
+        for i, img_path in enumerate(image_paths):
+            effect = (
+                effect_list[i]
+                if (effect_list and i < len(effect_list))
+                else _pick_effect(i, camera_effect)
+            )
+            nf = clip_frames[i]
+            print(f"    [{i+1:02d}/{num_images}] {effect} {nf}f ({nf/fps:.3f}s)")
+
+            clip_path = apply_camera_effect(
+                image_path=img_path,
+                effect=effect,
+                num_frames=nf,
+                width=width,
+                height=height,
+                fps=fps,
+                output_dir="output/clips",
+                clip_index=i,
+            )
+            clip_paths.append(clip_path)
+
+        # ── 2. Concat demuxer ─────────────────────────────────────────
+        concat_list = os.path.abspath("output/clips/concat_list.txt")
+        with open(concat_list, "w", encoding="utf-8") as f:
+            for cp in clip_paths:
+                safe_path = os.path.abspath(cp).replace("\\", "/")
+                f.write(f"file '{safe_path}'\n")
+
+        concat_list_safe = concat_list.replace("\\", "/")
+
+        r = subprocess.run([
+            "ffmpeg", "-y",
+            "-f", "concat", "-safe", "0",
+            "-i", concat_list_safe,
+            "-c", "copy",
+            raw_video.replace("\\", "/"),
+        ], stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+
+        if r.returncode != 0:
+            raise RuntimeError(f"Error concat:\n{r.stderr.decode('utf-8', errors='replace')}")
+
+        probe = subprocess.run(
+            ["ffprobe", "-v", "error", "-show_entries", "format=duration",
+             "-of", "default=noprint_wrappers=1:nokey=1", raw_video],
+            capture_output=True, text=True,
         )
-        nf = clip_frames[i]
-        print(f"    [{i+1:02d}/{num_images}] {effect} {nf}f ({nf/fps:.3f}s)")
-
-        clip_path = apply_camera_effect(
-            image_path=img_path,
-            effect=effect,
-            num_frames=nf,
-            width=width,
-            height=height,
-            fps=fps,
-            output_dir="output/clips",
-            clip_index=i,
-        )
-        clip_paths.append(clip_path)
-
-    # ── 2. Concat demuxer ─────────────────────────────────────────
-    concat_list = os.path.abspath("output/clips/concat_list.txt")
-    with open(concat_list, "w", encoding="utf-8") as f:
-        for cp in clip_paths:
-            safe_path = os.path.abspath(cp).replace("\\", "/")
-            f.write(f"file '{safe_path}'\n")
-
-    raw_video = os.path.abspath("output/clips/raw_concat.mp4")
-    concat_list_safe = concat_list.replace("\\", "/")
-
-    r = subprocess.run([
-        "ffmpeg", "-y",
-        "-f", "concat", "-safe", "0",
-        "-i", concat_list_safe,
-        "-c", "copy",
-        raw_video.replace("\\", "/"),
-    ], stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
-
-    if r.returncode != 0:
-        raise RuntimeError(f"Error concat:\n{r.stderr.decode('utf-8', errors='replace')}")
-
-    probe = subprocess.run(
-        ["ffprobe", "-v", "error", "-show_entries", "format=duration",
-         "-of", "default=noprint_wrappers=1:nokey=1", raw_video],
-        capture_output=True, text=True,
-    )
-    print(f"\n  Concat: {float(probe.stdout.strip()):.3f}s (esperado {duration_sec:.3f}s)")
+        print(f"\n  Concat: {float(probe.stdout.strip()):.3f}s (esperado {duration_sec:.3f}s)")
+    else:
+        print("  Saltando render de clips. Usando raw_concat.mp4 pre-generado.")
 
     # ── 3. Video + audio final ────────────────────────────────────
     sub_filter = ""

@@ -157,76 +157,107 @@ async def main() -> None:
     # si hay segments.txt lo usaremos después de tener image_paths.
     # Por ahora generamos siempre el audio completo.
     t = log("Generando audio TTS...")
-    await generate_audio(full_text, audio_path, voice=voice)
+    voice_rate = niche_config.get("voice_rate", "-10%")
+    await generate_audio(full_text, audio_path, voice=voice, rate=voice_rate)
     duration_sec = get_audio_duration(audio_path)
     log(f"Audio generado — {duration_sec:.1f}s", t)
 
-    # ── Imágenes ──────────────────────────────────────────────────────────────
-    log("Verificando assets de imágenes...")
+    # ── Imágenes / Lip Sync ───────────────────────────────────────────────────
     effect_list = None
     image_paths = []
+    segment_audio_paths = None
 
-    manual_images = collect_numbered_files(
-        "input/images", (".jpg", ".jpeg", ".png")
-    )
-
-    if not manual_images:
-        manual_images = collect_numbered_files(
-            "input", (".jpg", ".jpeg", ".png")
+    if niche == "mascota_tutorial":
+        t = log("Generando video de mascota con lip-sync...")
+        os.makedirs("output/clips", exist_ok=True)
+        raw_video = os.path.abspath("output/clips/raw_concat.mp4")
+        
+        from tools.lipsync import generate_lipsync_video
+        generate_lipsync_video(
+            audio_path=audio_path,
+            output_path=raw_video,
+            mascota_dir=niche_config.get("mascota_dir", "assets/mascota"),
+            rhubarb_bin=niche_config.get("rhubarb_bin", "bin/rhubarb"),
+            mouth_map=niche_config.get("mouth_shape_map", {}),
+            video_format=video_format,
+            fps=30
         )
+        log("Video de lip-sync generado", t)
+    elif niche == "differences":
+        t = log("Rendering differences video...")
+        os.makedirs("output/clips", exist_ok=True)
+        raw_video = os.path.abspath("output/clips/raw_concat.mp4")
 
-    if manual_images:
-        log(f"Modo A — imágenes manuales: {len(manual_images)}")
-        image_paths = manual_images
-
-    elif os.path.exists("input/prompts.txt"):
-        prompt_list, effect_list = read_prompts_file("input/prompts.txt", camera_effect)
-        log(f"Modo B — prompts.txt: {len(prompt_list)} imágenes...")
-        image_paths = []
-        for i, img_prompt in enumerate(prompt_list):
-            img_path = f"output/image_{i:02d}.png"
-            t = log(f"  Imagen {i+1}/{len(prompt_list)} [{effect_list[i]}]...")
-            generate_image(img_prompt, img_path)
-            log(f"  Imagen {i+1}/{len(prompt_list)} lista", t)
-            image_paths.append(img_path)
-
-    else:
-        if script_data is None:
-            raise RuntimeError(
-                "No hay imágenes en input/, input/prompts.txt ni script_data. "
-                "Agrega imágenes o usa --prompt."
-            )
-        all_prompts = get_all_image_prompts(script_data, duration)
-        log(f"Modo B automático — {len(all_prompts)} imágenes...")
-        image_paths = []
-        for i, img_prompt in enumerate(all_prompts):
-            img_path = f"output/image_{i:02d}.png"
-            t = log(f"  Imagen {i+1}/{len(all_prompts)}...")
-            generate_image(img_prompt, img_path)
-            log(f"  Imagen {i+1}/{len(all_prompts)} lista", t)
-            image_paths.append(img_path)
-
-    # ── Normalizar imágenes ───────────────────────────────────────────────────
-    t = log(f"Normalizando {len(image_paths)} imágenes a {target_size[0]}x{target_size[1]}...")
-    image_paths = normalize_images(image_paths, target_size=target_size)
-    log("Imágenes normalizadas", t)
-
-    # ── Audio por segmento (sincronización perfecta) ───────────────────────────
-    if segments_file and len(segments_file) == len(image_paths):
-        t = log(f"Generando {len(segments_file)} audios por segmento (paralelo)...")
-        seg_dir = "output/segments"
-        segment_audio_paths = await generate_audio_segments(
-            segments_file, seg_dir, voice=voice
+        from tools.differences import render_differences
+        await render_differences(
+            niche_config=niche_config,
+            output_path=raw_video,
         )
-        # Reemplazar el audio.mp3 con la concatenación exacta de los segmentos
-        concat_audio_segments(segment_audio_paths, audio_path)
         duration_sec = get_audio_duration(audio_path)
-        log(f"Audios por segmento listos — total {duration_sec:.1f}s", t)
-    elif segments_file:
-        log(
-            f"ADVERTENCIA: segments.txt tiene {len(segments_file)} líneas "
-            f"pero hay {len(image_paths)} imágenes. Se usará distribución igual."
+        log("Differences video rendered", t)
+    else:
+        log("Verificando assets de imágenes...")
+        manual_images = collect_numbered_files(
+            "input/images", (".jpg", ".jpeg", ".png")
         )
+
+        if not manual_images:
+            manual_images = collect_numbered_files(
+                "input", (".jpg", ".jpeg", ".png")
+            )
+
+        if manual_images:
+            log(f"Modo A — imágenes manuales: {len(manual_images)}")
+            image_paths = manual_images
+
+        elif os.path.exists("input/prompts.txt"):
+            prompt_list, effect_list = read_prompts_file("input/prompts.txt", camera_effect)
+            log(f"Modo B — prompts.txt: {len(prompt_list)} imágenes...")
+            image_paths = []
+            for i, img_prompt in enumerate(prompt_list):
+                img_path = f"output/image_{i:02d}.png"
+                t = log(f"  Imagen {i+1}/{len(prompt_list)} [{effect_list[i]}]...")
+                generate_image(img_prompt, img_path)
+                log(f"  Imagen {i+1}/{len(prompt_list)} lista", t)
+                image_paths.append(img_path)
+
+        else:
+            if script_data is None:
+                raise RuntimeError(
+                    "No hay imágenes en input/, input/prompts.txt ni script_data. "
+                    "Agrega imágenes o usa --prompt."
+                )
+            all_prompts = get_all_image_prompts(script_data, duration)
+            log(f"Modo B automático — {len(all_prompts)} imágenes...")
+            image_paths = []
+            for i, img_prompt in enumerate(all_prompts):
+                img_path = f"output/image_{i:02d}.png"
+                t = log(f"  Imagen {i+1}/{len(all_prompts)}...")
+                generate_image(img_prompt, img_path)
+                log(f"  Imagen {i+1}/{len(all_prompts)} lista", t)
+                image_paths.append(img_path)
+
+        # ── Normalizar imágenes ───────────────────────────────────────────────────
+        t = log(f"Normalizando {len(image_paths)} imágenes a {target_size[0]}x{target_size[1]}...")
+        image_paths = normalize_images(image_paths, target_size=target_size)
+        log("Imágenes normalizadas", t)
+
+        # ── Audio por segmento (sincronización perfecta) ───────────────────────────
+        if segments_file and len(segments_file) == len(image_paths):
+            t = log(f"Generando {len(segments_file)} audios por segmento (paralelo)...")
+            seg_dir = "output/segments"
+            segment_audio_paths = await generate_audio_segments(
+                segments_file, seg_dir, voice=voice
+            )
+            # Reemplazar el audio.mp3 con la concatenación exacta de los segmentos
+            concat_audio_segments(segment_audio_paths, audio_path)
+            duration_sec = get_audio_duration(audio_path)
+            log(f"Audios por segmento listos — total {duration_sec:.1f}s", t)
+        elif segments_file:
+            log(
+                f"ADVERTENCIA: segments.txt tiene {len(segments_file)} líneas "
+                f"pero hay {len(image_paths)} imágenes. Se usará distribución igual."
+            )
 
     # ── Ensamblar ─────────────────────────────────────────────────────────────
     t = log("Ensamblando video...")

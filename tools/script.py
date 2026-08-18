@@ -3,6 +3,10 @@ import os
 import re
 import google.generativeai as genai
 from typing import Dict, List
+from dotenv import load_dotenv
+
+load_dotenv()
+
 
 # Configuración de duración — incluye cantidad de imágenes proporcional
 DURATION_CONFIG = {
@@ -154,7 +158,9 @@ def generate_script(
             raise ValueError("GEMINI_API_KEY no configurada.")
 
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-3-flash-preview")
+        model_name = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+        model = genai.GenerativeModel(model_name)
+
 
         if duration not in DURATION_CONFIG:
             raise ValueError(f"Duracion '{duration}' no valida. Usa 'short' o 'medium'.")
