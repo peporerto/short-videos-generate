@@ -168,21 +168,25 @@ async def main() -> None:
     segment_audio_paths = None
 
     if niche == "mascota_tutorial":
-        t = log("Generando video de mascota con lip-sync...")
+        t = log("Generando video de mascota (microclips reales, sin Rhubarb)...")
         os.makedirs("output/clips", exist_ok=True)
         raw_video = os.path.abspath("output/clips/raw_concat.mp4")
-        
-        from tools.lipsync import generate_lipsync_video
-        generate_lipsync_video(
+
+        from tools.mascota_clips import generate_mascota_raw_video
+        generate_mascota_raw_video(
             audio_path=audio_path,
             output_path=raw_video,
-            mascota_dir=niche_config.get("mascota_dir", "assets/mascota"),
-            rhubarb_bin=niche_config.get("rhubarb_bin", "bin/rhubarb"),
-            mouth_map=niche_config.get("mouth_shape_map", {}),
+            master_video=niche_config.get("master_video", "assets/mascota/gorila_master.mp4"),
+            library_dir=niche_config.get("library_dir", "assets/mascota/library"),
+            manifest_path=niche_config.get("library_manifest", "assets/mascota/library.json"),
             video_format=video_format,
-            fps=30
+            usable_range=tuple(niche_config.get("usable_range", [0, None])),
+            exclude_ranges=[tuple(r) for r in niche_config.get("exclude_ranges", [])],
+            clip_min_sec=niche_config.get("clip_min_sec", 1.0),
+            clip_max_sec=niche_config.get("clip_max_sec", 2.0),
+            fps=30,
         )
-        log("Video de lip-sync generado", t)
+        log("Video de mascota generado", t)
     elif niche == "differences":
         t = log("Rendering differences video...")
         os.makedirs("output/clips", exist_ok=True)
@@ -247,7 +251,7 @@ async def main() -> None:
             t = log(f"Generando {len(segments_file)} audios por segmento (paralelo)...")
             seg_dir = "output/segments"
             segment_audio_paths = await generate_audio_segments(
-                segments_file, seg_dir, voice=voice
+                segments_file, seg_dir, voice=voice, rate=voice_rate
             )
             # Reemplazar el audio.mp3 con la concatenación exacta de los segmentos
             concat_audio_segments(segment_audio_paths, audio_path)

@@ -10,7 +10,7 @@ async def test():
     # Probamos con una voz estándar y sin parámetros raros
     communicate = edge_tts.Communicate(texto, 'es-ES-AlvaroNeural')
     await communicate.save('output/test_audio.mp3')
-    print('✅ Audio generado OK en output/test_audio.mp3')
+    print('[OK] Audio generado OK en output/test_audio.mp3')
 
 if __name__ == "__main__":
     asyncio.run(test())

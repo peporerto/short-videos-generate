@@ -68,14 +68,13 @@ nichos:
     format: "short"
     narrative_mode: "informative"
     music: "assets/music/corporate.mp3"
-    mascota_dir: "assets/mascota"
-    rhubarb_bin: "bin/rhubarb"
-    mouth_shape_map:
-      A: "mouth_placeholder_A.png"
-      B: "mouth_placeholder_B.png"
-      C: "mouth_placeholder_C.png"
-      D: "mouth_placeholder_D.png"
-      E: "mouth_placeholder_E.png"
+    master_video: "assets/mascota/gorila_master.mp4"
+    library_dir: "assets/mascota/library"
+    library_manifest: "assets/mascota/library.json"
+    clip_min_sec: 0.8
+    clip_max_sec: 1.5
+    usable_range: [0, 47.3]
+    exclude_ranges: [[41.8, 42.2]]
 
   differences:
     format: "short"

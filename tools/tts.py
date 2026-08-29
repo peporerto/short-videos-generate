@@ -2,20 +2,41 @@ import asyncio
 import edge_tts
 import subprocess
 import os
-from typing import List
+from typing import List, Union
 
 
-async def generate_audio(text: str, output_path: str, voice: str = "es-CO-GonzaloNeural", rate: str = "-10%") -> None:
+def _normalize_rate(rate: Union[str, int, float]) -> str:
+    """Asegura que el rate esté en el formato esperado por edge-tts (ej. '+10%' o '-10%')."""
+    if rate is None:
+        return "-10%"
+    
+    if isinstance(rate, (int, float)):
+        if rate >= 0:
+            return f"+{int(rate)}%"
+        else:
+            return f"{int(rate)}%"
+            
+    rate_str = str(rate).strip()
+    if not rate_str.endswith("%"):
+        rate_str += "%"
+    if not rate_str.startswith("+") and not rate_str.startswith("-"):
+        rate_str = "+" + rate_str
+    return rate_str
+
+
+async def generate_audio(text: str, output_path: str, voice: str = "es-CO-GonzaloNeural", rate: Union[str, int, float] = "-10%") -> None:
     """Genera audio a partir de texto usando edge-tts en español."""
     try:
-        communicate = edge_tts.Communicate(text, voice, rate=rate)
+        norm_rate = _normalize_rate(rate)
+        communicate = edge_tts.Communicate(text, voice, rate=norm_rate)
         await communicate.save(output_path)
     except Exception as e:
         raise RuntimeError(f"Error generando audio con edge-tts: {e}")
 
 
-async def _generate_one(text: str, path: str, voice: str, rate: str = "-10%") -> str:
-    communicate = edge_tts.Communicate(text, voice, rate=rate)
+async def _generate_one(text: str, path: str, voice: str, rate: Union[str, int, float] = "-10%") -> str:
+    norm_rate = _normalize_rate(rate)
+    communicate = edge_tts.Communicate(text, voice, rate=norm_rate)
     await communicate.save(path)
     return path
 
@@ -24,7 +45,7 @@ async def generate_audio_segments(
     segments: List[str],
     output_dir: str,
     voice: str = "es-CO-GonzaloNeural",
-    rate: str = "-10%",
+    rate: Union[str, int, float] = "-10%",
 ) -> List[str]:
     """
     Genera un MP3 por cada segmento en paralelo (asyncio.gather).
